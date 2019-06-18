@@ -1,0 +1,9 @@
+version: '3'
+services:
+  web:
+    image: nginx
+    volumes:
+      - ../dist:/usr/share/nginx/html
+    ports:
+      - "30081:80"
+    container_name: dvlg
