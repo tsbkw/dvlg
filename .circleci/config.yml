@@ -1,0 +1,35 @@
+version: 2
+jobs:
+  shellcheck:
+    docker:
+      - image: koalaman/shellcheck-alpine:stable
+    steps:
+      - checkout
+      - run:
+          name: Check Scripts
+          command: | 
+            find . -type f -name '*.sh' | wc -l
+            find . -type f -name '*.sh' | xargs shellcheck --external-sources
+  build:
+    docker:
+      - image: docker:dind
+    steps:
+      - checkout
+      - run: apk --update add yarn py-pip python-dev libffi-dev openssl-dev gcc libc-dev make
+      - run: pip install docker-compose
+      - run: yarn install
+      - setup_remote_docker
+      - run:
+          name: setup docker container for hosting
+          command: sh local_docker_test.sh
+      - run:
+          name: check accessibility
+          command: docker exec dvlg curl --retry 10 --retry-connrefused http://localhost
+workflows:
+  version: 2
+  build-and-test:
+    jobs:
+      - shellcheck
+      - build:
+          requires:
+            - shellcheck
