@@ -8,6 +8,8 @@ const RAW_POST_ROOT = 'rawpost';
 const CONVERTED_POST_ROOT = 'posts';
 const TEST_POST_DATA_PATH = 'test/testpost';
 
+const lastUpdateMap = new Map();
+
 // Setup testdata if not production, and remove testdata if production
 // This cannot be done in hooks, because env.markdownFiles is loaded before hooks.build.before runs.
 if (process.env.NODE_ENV === 'production') {
@@ -42,31 +44,29 @@ if (process.env.NODE_ENV === 'production') {
 
 
 const lastUpdateList = [];
-const lastUpdateMap = new Map();
 function getPathRecursively(filePath, filterFunc = _ => true, setLastUpdateList = false, lastUpdateMap=undefined) {
   const pathList = [];
   const dirents = fs.readdirSync(filePath, {withFileTypes: true});
   dirents.forEach(dirent => {
     const pathToDirent = path.join(filePath, dirent.name);
     if (dirent.isDirectory()) {
-      getPathRecursively(pathToDirent, filterFunc).forEach(x => pathList.push(x), false, lastUpdateMap);
+      getPathRecursively(pathToDirent, filterFunc, false, lastUpdateMap).forEach(x => pathList.push(x));
     } else if(filterFunc(dirent)) {
       const stats = fs.statSync(pathToDirent);
       pathList.push(pathToDirent);
       if(lastUpdateMap) {
-        lastUpdateMap.set(pathToDirent, stats.mtime);
-        console.log('set lastUpdateMap', pathToDirent, stats.mtime);
+        const readableUtcDate = stats.mtime.toISOString().
+          replace(/T/, ' ').
+          replace(/\..+/, '(UTC)')
+        lastUpdateMap.set(pathToDirent, readableUtcDate);
       }
     }
   });
   if (lastUpdateMap) {
     pathList.sort((path1, path2) => lastUpdateMap.get(path2) - lastUpdateMap.get(path1));
   }
-  console.log('setLastUpdateList', setLastUpdateList)
-  console.log('lastUpdateMap', lastUpdateMap)
   if (setLastUpdateList) {
     pathList.forEach(mdPath => {
-      console.log('lastUpdateMap.get', lastUpdateMap.get(mdPath))
       lastUpdateList.push(lastUpdateMap.get(mdPath));
     });
   }
@@ -79,10 +79,6 @@ function loadMdFiles() {
     mdPathList = getPathRecursively(RAW_POST_ROOT, x => {
       return !x.name.startsWith('__') && x.name.endsWith('.md');
     }, true, lastUpdateMap);
-    console.log('total files: ', mdPathList.length, lastUpdateList.length);
-    for (let i = 0; i < mdPathList.length; i++ ) {
-      console.log('loaded file and last update: ', mdPathList[i], lastUpdateList[i]);
-    }
   }
   return mdPathList;
 }
@@ -103,11 +99,20 @@ export default {
   ** Headers of the page
   */
   head: {
+    htmlAttrs: {
+      prefix: 'og: http://ogp.me/ns#'
+    },
     title: pkg.name,
     meta: [
       { charset: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { hid: 'description', name: 'description', content: pkg.description }
+      { hid: 'description', name: 'description', content: pkg.description },
+      { hid: 'og:site_name', property: 'og:site_name', content: dvlgConfig.ogpSiteName },
+      { hid: 'og:type', property: 'og:type', content: 'artice' },
+      { hid: 'og:url', property: 'og:url', content: dvlgConfig.ogpBaseUrl },
+      { hid: 'og:title', property: 'og:title', content: dvlgConfig.ogpSiteName },
+      { hid: 'og:description', property: 'og:description', content: dvlgConfig.ogpBaseDescription },
+      { hid: 'og:image', property: 'og:image', content: `${dvlgConfig.ogpBaseUrl}/icon.png` }
     ],
     link: [
       { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
@@ -187,7 +192,8 @@ export default {
     author: dvlgConfig.author,
     contact: dvlgConfig.contact,
     github: dvlgConfig.github,
-    firstPublishYear: dvlgConfig.firstPublishedYear
+    firstPublishYear: dvlgConfig.firstPublishedYear,
+    baseUrl: dvlgConfig.ogpBaseUrl
   },
 
   markdownit: {

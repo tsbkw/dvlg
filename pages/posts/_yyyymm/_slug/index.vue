@@ -4,7 +4,7 @@
     <TagBadges :tagList='post.tags'/>
     <div class="markdown-body" v-html="post.htmlContent">
     </div>
-    <p>last updated: {{post.lastUpdate}}</p>
+    <p>Last updated: {{post.lastUpdate}}</p>
   </div>
 </template>
 
@@ -28,6 +28,18 @@ import { Post } from '@/models/Post.ts'
   },
   components: {
     TagBadges: () => import('@/components/tag/TagBadges.vue')
+  },
+  head() {
+    const summary = this.post.getSummary()
+    return {
+      title: this.post.title,
+      meta: [
+        { hid: 'og:title', property: 'og:title', content: this.post.title },
+        { hid: 'og:url', property: 'og:url', content: process.env.baseUrl + $nuxt.$route.path },
+        { hid: 'og:description', property: 'og:description', content: summary },
+        { hid: 'description', name: 'description', content: summary },
+      ]
+    }
   }
 })
 export default class PostPage extends Vue {
