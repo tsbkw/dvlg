@@ -4,7 +4,7 @@
     <TagBadges :tagList='post.tags'/>
     <div class="markdown-body" v-html="post.htmlContent">
     </div>
-    <p>last updated: {{post.lastUpdate}}</p>
+    <p>Last updated: {{post.lastUpdate}}</p>
   </div>
 </template>
 
