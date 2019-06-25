@@ -7,4 +7,6 @@ export default {
   ogpSiteName: 'DVLG',
   ogpBaseUrl: 'localhost:30080',
   ogpBaseDescription: 'dvlg - blog framework',
+  // for sitemap
+  hostname: 'https://www.tsbkw.gq'
 }

@@ -1,6 +1,5 @@
 import pkg from './package';
 import dvlgConfig from './dvlg.config';
-import { file } from '@babel/types';
 
 const fs = require('fs');
 const path = require('path');
@@ -77,7 +76,7 @@ let mdPathList = undefined;
 function loadMdFiles() {
   if (mdPathList === undefined) {
     mdPathList = getPathRecursively(RAW_POST_ROOT, x => {
-      return !x.name.startsWith('__') && x.name.endsWith('.md');
+      return !x.name.startsWith('__') && (x.name.endsWith('.md') || x.name.endsWith('.MD'));
     }, true, lastUpdateMap);
   }
   return mdPathList;
@@ -89,7 +88,6 @@ function postPathList() {
   mdPathList.map(mdPath => postPathList.push(mdPath.replace(RAW_POST_ROOT, CONVERTED_POST_ROOT).replace('.md','')))
   return postPathList
 }
-
 
 
 export default {
@@ -146,8 +144,14 @@ export default {
     // Doc: https://bootstrap-vue.js.org/docs/
     'bootstrap-vue/nuxt',
     '@nuxtjs/pwa',
-    '@nuxtjs/markdownit'
+    '@nuxtjs/markdownit',
+    '@nuxtjs/sitemap',
   ],
+
+  sitemap: {
+    hostname: dvlgConfig.hostname,
+  },
+
   bootstrapVue: {
     components: [
       'BNavbar', 'BNavbarNav', 'BNavItem', 'BNavbarBrand', 'BNavbarToggle', 'BCollapse', // Header
